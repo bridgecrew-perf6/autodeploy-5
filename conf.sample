@@ -1,0 +1,19 @@
+[user-repo]
+# Upstream URL to fetch from. Must be non-interactive, so set up deploy-keys
+# or a .netrc or whatever other means that the daemon can fetch / clone autonomously
+url = git@gitea.sdcc.bnl.gov:user/repo.git
+
+# Local folder to clone upstream @url to
+local = /usr/src/repo
+
+# Secret used as HMAC signing-key from Gitea to validate the webhook
+secret = ChAnG3Me!$
+
+# Make the local path a bare repo not a checked out one, defaults to false
+bare = false
+
+# Optional script to run after a fetch and update of local repo
+postscript = /usr/libexec/postsync.sh
+
+
+# [other-repo] etc...
