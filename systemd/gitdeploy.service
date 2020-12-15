@@ -1,0 +1,16 @@
+[Unit]
+Description=KTI Sync Service
+After=redis.service
+Require=redis.service
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/
+ExecStart=/usr/libexec/ktisyncd
+Restart=always
+RestartSec=5
+Environment=USER=root HOME=/root/
+
+[Install]
+WantedBy=multi-user.target
