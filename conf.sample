@@ -1,4 +1,5 @@
-[user-repo]
+# Section name is from "full_name" of webhook output for "repository"
+[repo/fullname]
 # Upstream URL to fetch from. Must be non-interactive, so set up deploy-keys
 # or a .netrc or whatever other means that the daemon can fetch / clone autonomously
 url = git@gitea.sdcc.bnl.gov:user/repo.git
@@ -6,10 +7,17 @@ url = git@gitea.sdcc.bnl.gov:user/repo.git
 # Local folder to clone upstream @url to
 local = /usr/src/repo
 
+# Where the daemon will be listening and where webhook will push notifications
+socket = /run/sync-daemon.s
+
 # Secret used as HMAC signing-key from Gitea to validate the webhook
 secret = ChAnG3Me!$
 
-# Make the local path a bare repo not a checked out one, defaults to false
+# default ref to check out, conflicts with bare=true
+branch = master
+
+# Make the local path a bare repo not a checked out one
+# defaults to false, conflicts with branch setting
 bare = false
 
 # Optional script to run after a fetch and update of local repo
