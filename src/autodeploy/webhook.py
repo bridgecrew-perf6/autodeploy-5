@@ -4,12 +4,13 @@ from typing import Union, Dict, Any  # noqa
 
 import json
 import hmac
-import hashlib
+import socket
 import configparser
 
+from .message import Message, encode_message
 
 def validate_hmac(secret: str, signature: str) -> bool:
-    h = hmac.new(secret.encode('utf8'), digestmod=hashlib.sha256)
+    h = hmac.new(secret.encode('utf8'), digestmod='sha256')
     return hmac.compare_digest(h.hexdigest(), signature)
 
 
@@ -56,7 +57,10 @@ class WebhookOutput(object):
             return validate_hmac(self.cfgsection['secret'], self.sig)
         return False
 
-
-
     def notify_daemon(self):
-        raise NotImplementedError()
+        # Message queue or socket?
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        s.sendto()
+        msg_bytes = encode_message(self.json, self.cfgsection['secret'])
+        self.cfgsection['socket']
+
