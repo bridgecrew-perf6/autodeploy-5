@@ -3,7 +3,7 @@ import hmac
 """ Message format:
         repo-name \\n
         branch:hashofoldstate:hashofnewstate \\n
-        username:person-name:email\\n
+        username:person-name:email \\n
         signature
 """
 
@@ -11,7 +11,7 @@ import hmac
 def encode_message(json: dict, key: bytes) -> bytes:
     p = json['pusher']
     n = json['repository']['full_name']
-    refstr = f"{json['ref']}:{json['before']}:{json['after']}\n{json['']}"
+    refstr = f"{json['ref']}:{json['before']}:{json['after']}"
     pusherstr = f"{p['login']}:{p['full_name']}:{p['email']}"
     msg = f'{n}\n{refstr}\n{pusherstr}'
     hm = hmac.new(key, msg.encode('utf8'), digestmod='sha256')

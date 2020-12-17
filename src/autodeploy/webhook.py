@@ -8,6 +8,7 @@ import socket
 import configparser
 
 from .message import Message, encode_message
+from . import log, config
 
 def validate_hmac(secret: str, signature: str) -> bool:
     h = hmac.new(secret.encode('utf8'), digestmod='sha256')
@@ -16,16 +17,14 @@ def validate_hmac(secret: str, signature: str) -> bool:
 
 class WebhookOutput(object):
 
-    config: str = '/etc/autodeploy.cfg'
-
-    def __init__(self, data: Union[str, bytes], signature: str, config=None):
+    def __init__(self, data: Union[str, bytes], signature: str):
         if isinstance(data, str):
             self.data = data.encode('utf8')
         else:
             self.data = data
 
         self.cfg = configparser.ConfigParser()
-        self.cfg.read_file(config if config is not None else self.config)
+        self.cfg.read_file(config)
         self.sig = signature
 
     # The json from the webhook should always be a dictionary, not a list
@@ -58,9 +57,10 @@ class WebhookOutput(object):
         return False
 
     def notify_daemon(self):
-        # Message queue or socket?
         s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        s.sendto()
         msg_bytes = encode_message(self.json, self.cfgsection['secret'])
-        self.cfgsection['socket']
-
+        n = s.sendto(msg, self.cfgsection['socket'])
+        ans = s.recvfrom(1024).decode('utf8')
+        if ans != "OK":
+            log.error("Failed to notify daemon: %s", ans)
+        # TODO: Send email?
