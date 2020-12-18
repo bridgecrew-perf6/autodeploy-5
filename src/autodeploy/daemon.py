@@ -1,26 +1,23 @@
 from typing import Union
 
 import socket
-import configparser
-import traceback
+import logging
 from socketserver import UnixDatagramServer, BaseRequestHandler
 
 from .message import Message
-from . import log, config
+from . import config
 
 from .repo import GitRepo, GitExcept
 from .util import get_output, send_email
 
+log = logging.getLogger(__name__)
 
-cfg = configparser.ConfigParser()
-cfg.read_file(config)
 
-class SyncServer(UnixDatagramServer):
+class StopServer(Exception):
     pass
 
-class SyncRequest(BaseRequestHandler):
 
-    config: str = config
+class SyncRequestHandler(BaseRequestHandler):
 
     def setup(self):
         self.data, self.socket = self.request
@@ -28,13 +25,21 @@ class SyncRequest(BaseRequestHandler):
 
     def do_request(self):
         msg = Message.from_msg(self.data)
-        if not msg.repo in cfg:
-            raise KeyError(f'Got a repo ({msg.repo}) not found in cfg=f{cfg}')
+        if msg.repo not in config:
+            raise KeyError(f'Got a repo ({msg.repo}) not found in cfg=f{config}')
 
-        sec = cfg[msg.repo]
+        sec = config[msg.repo]
         if not msg.verify(sec['secret'].encode('utf8')):
             raise ValueError(f'Invalid signature on {msg.repo}')
-        make_repo_state(msg, sec['local'], sec['url'], sec.get('postscript'))
+
+        try:
+            make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
+        except GitExcept as e:
+            log.exception("Exception with git: %s", e)
+            send_email(msg.email, f'Git Deploy Failure for {msg.repo}', str(e))
+            raise
+        else:
+            run_postscript_and_notify(msg, sec['local'], sec.get('postscript'))
 
     def handle(self):
         try:
@@ -42,42 +47,41 @@ class SyncRequest(BaseRequestHandler):
         except Exception as e:
             log.warning("Exception while handling request: %s", e)
             self.socket.sendto(str(e).encode('utf8'), self.client_address)
+        else:
+            self.socket.sendto('OK')
 
 
-
-def make_repo_state(m: Message, path: str, url: str, postscript: Union[str, None]) -> bool:
+def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> None:
+    """ Make sure git repo from @url is in state @newhash in folder @path """
     git = GitRepo(path, url)
-    try:
-        git.fetch()
-        current_hash = git.current_state(git.current_ref('master'))
-        if m.before != current_hash:
-            log.warning("Repo in unexpected state (%s) != upstream (%s)",
-                        current_hash, m.before)
-            log.warning("Will reset to new state regardless...")
-        git.reset(m.state)
-    except GitExcept as e:
-        log.error("Exception with git: %s", e)
-        send_email(m.email, f'Git Deploy Failure for {m.repo}', str(e))
-    else:
-        msg = f"""
+    git.fetch()
+    current_hash = git.current_state(git.current_ref('master'))
+    if oldhash != current_hash:
+        log.warning("Repo in unexpected state (%s) != upstream (%s)",
+                    current_hash, oldhash)
+        log.warning("Will reset to new state regardless...")
+    git.reset(newhash)
+
+
+def run_postscript_and_notify(m: Message, path: str, script: Union[str, None]):
+
+    msg = f"""
 Hello,
 
 Git Deploy was done for {m.repo} on {socket.getfqdn()} in {path}
 setting state {m.state} for branch {m.branch}.
 """
-        if postscript:
-            out, rc = get_output(postscript)
-            msg += f'\nPost-script {postscript} returned {rc}:\n{out}'
-        msg += '\nGitDeploy Daemon'
+    if script:
+        out, rc = get_output(f'{script} "{path}"')
+        msg += f'\nPost-script {script} returned {rc}:\n{out.decode("utf8")}'
+    msg += '\nGitDeploy Daemon'
 
-        subject = f'Git Deploy Done for {m.repo} on {socket.getfqdn()}'
-        send_email(m.email, subject, msg)
-
-    return False
+    subject = f'Git Deploy Done for {m.repo} on {socket.getfqdn()}'
+    send_email(m.email, subject, msg)
 
 
+class SyncServer(UnixDatagramServer):
+    allow_reuse_address = True
 
-
-
-
-
+    def __init__(self):
+        super().__init__(config['DEFAULT']['socket'], SyncRequestHandler)

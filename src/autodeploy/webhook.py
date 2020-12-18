@@ -1,14 +1,14 @@
 #!/usr/bin/python3
 
-from typing import Union, Dict, Any  # noqa
+from typing import Union, Dict, Any, Tuple  # noqa
 
 import json
 import hmac
 import socket
-import configparser
 
-from .message import Message, encode_message
-from . import log, config
+from .message import encode_message
+from . import config
+
 
 def validate_hmac(secret: str, signature: str) -> bool:
     h = hmac.new(secret.encode('utf8'), digestmod='sha256')
@@ -22,9 +22,7 @@ class WebhookOutput(object):
             self.data = data.encode('utf8')
         else:
             self.data = data
-
-        self.cfg = configparser.ConfigParser()
-        self.cfg.read_file(config)
+        self.cfg = config
         self.sig = signature
 
     # The json from the webhook should always be a dictionary, not a list
@@ -42,10 +40,10 @@ class WebhookOutput(object):
         return self._cfgsec
 
     # Make sure is called before self.cfgsection!
-    def allowed_repo(self) -> bool:
+    def _allowed_repo(self) -> bool:
         return self.cfg.has_section(self.json['full_name'])
 
-    def allowed_branch(self) -> bool:
+    def _allowed_branch(self) -> bool:
         # all branches "allowable" on a bare repo
         if self.cfgsection.get('bare', False):
             return True
@@ -53,15 +51,16 @@ class WebhookOutput(object):
         return self.json['ref'] == f"refs/heads/{self.cfgsection['branch']}"
 
     def validate(self) -> bool:
-        if self.allowed_repo() and self.allowed_branch():
+        if self._allowed_repo() and self._allowed_branch():
             return validate_hmac(self.cfgsection['secret'], self.sig)
         return False
 
-    def notify_daemon(self):
+    def notify_daemon(self) -> Tuple[str, bool]:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         msg_bytes = encode_message(self.json, self.cfgsection['secret'])
-        n = s.sendto(msg_bytes, self.cfgsection['socket'])
-        ans = s.recvfrom(1024).decode('utf8')
-        if ans != "OK":
-            log.error("Failed to notify daemon: %s", ans)
-        # TODO: Send email?
+        s.sendto(msg_bytes, self.cfgsection['socket'])
+        ans = s.recv(4096).decode('utf8')
+        ok = True
+        if ans.split('\n')[0] != "OK":
+            ok = False
+        return ans, ok

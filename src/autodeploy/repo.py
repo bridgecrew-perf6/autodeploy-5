@@ -44,4 +44,3 @@ class GitRepo(object):
         if r != 0:
             log.error("Error resetting to %s:\n%s", hash, out)
             raise GitExcept("Error git hard-reset")
-
