@@ -20,25 +20,25 @@ def encode_message(json: dict, key: bytes) -> bytes:
 
 class Message(object):
 
-    repo:     str
-    branch:   str
-    before:   str
-    current:  str
-    pusher:   str
-    fullname: str
-    email:    str
-    digest:   str
+    repo:     str   # Repo name from cfg-file and webhook
+    branch:   str   # branch to act on if not bare
+    before:   str   # state we expect the repo to be in before changing
+    state:    str   # new state (hash) after commit is applied
+    pusher:   str   # username of who pushed
+    fullname: str   # real name of who pushed
+    email:    str   # email of who pushed
+    digest:   str   # signature digest
 
     @classmethod
     def from_msg(cls, msg: bytes):
         c = cls()
         c.repo, ref, person, c.digest = msg.decode('utf8').split('\n')
-        c.branch, c.before, c.current = ref.split(':')
+        c.branch, c.before, c.state = ref.split(':')
         c.pusher, c.fullname, c.email = person.split(':')
         return c
 
-    def verify(self, key: bytes):
-        m = f"{self.repo}\n{self.branch}:{self.before}:{self.current}\n"
+    def verify(self, key: bytes) -> bool:
+        m = f"{self.repo}\n{self.branch}:{self.before}:{self.state}\n"
         m += f"{self.pusher}:{self.fullname}:{self.email}"
         hm = hmac.new(key, m.encode('utf8'), 'sha256')
         return hmac.compare_digest(hm.hexdigest(), self.digest)

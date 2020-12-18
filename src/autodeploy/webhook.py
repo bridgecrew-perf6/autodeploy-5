@@ -36,6 +36,7 @@ class WebhookOutput(object):
 
     @property
     def cfgsection(self) -> dict:
+        """ Return the section in the config-structure for current repo """
         if not hasattr(self, '_cfgsec'):
             self._cfgsec = dict(self.cfg[self.json['full_name']].items())
         return self._cfgsec
@@ -59,7 +60,7 @@ class WebhookOutput(object):
     def notify_daemon(self):
         s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         msg_bytes = encode_message(self.json, self.cfgsection['secret'])
-        n = s.sendto(msg, self.cfgsection['socket'])
+        n = s.sendto(msg_bytes, self.cfgsection['socket'])
         ans = s.recvfrom(1024).decode('utf8')
         if ans != "OK":
             log.error("Failed to notify daemon: %s", ans)
