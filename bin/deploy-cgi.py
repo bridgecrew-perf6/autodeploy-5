@@ -28,6 +28,11 @@ def recieve_and_submit(data, sig):
 
 if __name__ == '__main__':
     try:
-        out, rc = recieve_and_submit(sys.stdin.read(), get_signature())
+        out, ok = recieve_and_submit(sys.stdin.read(), get_signature())
     except Exception as e:
         err_exit('CGI Exception occured: %s' % e, 500)
+    else:
+        if not ok:
+            err_exit('Error occured processing hook: %s' % out, 500)
+        else:
+            print(f'\nStatus: 200\n\n{out}')

@@ -1,5 +1,7 @@
 from typing import Tuple
 import subprocess
+import signal
+import threading
 import shlex
 
 import smtplib
@@ -23,3 +25,26 @@ def send_email(to: str, sub: str, message: str, sender: str = 'Deploy Daemon <ro
     s = smtplib.SMTP('localhost')
     s.send_message(msg)
     s.quit()
+
+
+class StopServer(Exception):
+    pass
+
+
+def run_serverclass_thread(srv, stopsigs=[signal.SIGTERM, signal.SIGINT]):
+
+    def sighandle(signal, frame):
+        raise StopServer()
+
+    for sig in stopsigs:
+        signal.signal(sig, sighandle)
+
+    srv_thread = threading.Thread(target=srv.serve_forever)
+    srv_thread.start()
+    while True:
+        try:
+            signal.pause()
+        except StopServer:
+            srv.shutdown()
+            break
+    srv_thread.join()

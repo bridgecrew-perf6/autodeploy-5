@@ -1,8 +1,9 @@
 import os
+import logging
 
-from . import log
 from .util import get_output
 
+log = logging.getLogger(__name__)
 
 class GitExcept(Exception):
     pass

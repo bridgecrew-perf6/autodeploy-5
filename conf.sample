@@ -5,10 +5,10 @@
 socket = /run/sync-daemon.s
 
 # Log level, info, debug, error, etc...
-loglevel = info
+loglevel = debug
 
 # Log location, stdout, file-path, or syslog
-loglocation = stdout
+loglocation = stderr
 
 # Section name is from "full_name" of webhook output for "repository"
 [repo/fullname]

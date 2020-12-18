@@ -13,10 +13,6 @@ from .util import get_output, send_email
 log = logging.getLogger(__name__)
 
 
-class StopServer(Exception):
-    pass
-
-
 class SyncRequestHandler(BaseRequestHandler):
 
     def setup(self):
