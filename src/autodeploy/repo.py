@@ -24,7 +24,7 @@ class GitRepo(object):
 
     def current_state(self, ref):
         hash, rc = get_output('git rev-parse {0}'.format(ref), cwd=self.dir)
-        return hash if rc == 0 else None
+        return hash.decode('ascii').strip('\n') if rc == 0 else None
 
     def fetch(self):
         out, rc = get_output('git fetch', cwd=self.dir)
@@ -38,7 +38,7 @@ class GitRepo(object):
     def current_ref(self, ref='HEAD'):
         out, r = get_output('git symbolic-ref --short -q {0}'.format(ref),
                             cwd=self.dir)
-        return out if r == 0 else None
+        return out.decode('ascii').strip('\n') if r == 0 else None
 
     def reset(self, hash):
         out, r = get_output(f'git reset --hard {hash}', cwd=self.dir)

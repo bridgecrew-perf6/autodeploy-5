@@ -2,7 +2,7 @@ from typing import Union
 
 import socket
 import logging
-from socketserver import UnixDatagramServer, BaseRequestHandler
+from socketserver import UnixDatagramServer, DatagramRequestHandler
 
 from .message import Message
 from . import config
@@ -12,15 +12,14 @@ from .util import get_output, send_email
 
 log = logging.getLogger(__name__)
 
+email = 'smtp_addr' in config['DEFAULT']
 
-class SyncRequestHandler(BaseRequestHandler):
 
-    def setup(self):
-        self.data, self.socket = self.request
-        log.debug("Start reading from %s", self.client_address)
+class SyncRequestHandler(DatagramRequestHandler):
 
     def do_request(self):
-        msg = Message.from_msg(self.data)
+        log.debug("Start reading from %s", self.client_address)
+        msg = Message.from_msg(self.packet)
         if msg.repo not in config:
             raise KeyError(f'Got a repo ({msg.repo}) not found in cfg=f{config}')
 
@@ -32,7 +31,6 @@ class SyncRequestHandler(BaseRequestHandler):
             make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
         except GitExcept as e:
             log.exception("Exception with git: %s", e)
-            send_email(msg.email, f'Git Deploy Failure for {msg.repo}', str(e))
             raise
         else:
             run_postscript_and_notify(msg, sec['local'], sec.get('postscript'))
@@ -44,7 +42,7 @@ class SyncRequestHandler(BaseRequestHandler):
             log.warning("Exception while handling request: %s", e)
             self.socket.sendto(str(e).encode('utf8'), self.client_address)
         else:
-            self.socket.sendto('OK')
+            self.socket.sendto(b'OK', self.client_address)
 
 
 def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> None:
@@ -73,7 +71,8 @@ setting state {m.state} for branch {m.branch}.
     msg += '\nGitDeploy Daemon'
 
     subject = f'Git Deploy Done for {m.repo} on {socket.getfqdn()}'
-    send_email(m.email, subject, msg)
+    if email:
+        send_email(m.email, subject, msg)
 
 
 class SyncServer(UnixDatagramServer):

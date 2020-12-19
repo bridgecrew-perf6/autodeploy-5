@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 from autodeploy.util import run_serverclass_thread
 from autodeploy.webhook import WebhookOutput
 
@@ -6,6 +6,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import logging
 
 log = logging.getLogger(__name__)
+
 
 class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
 
@@ -22,6 +23,7 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         postlen = int(self.headers['content-length'])
         webdata = self.rfile.read(postlen)
+        log.debug("Got %d bytes in request from %s", postlen, self.client_address)
         sig = self.headers['X-Gitea-Signature']
         if not sig:
             self.send_error(401, 'No signature provided')
@@ -29,6 +31,7 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             self.process_data(webdata, sig)
         except Exception as e:
+            log.exception('Unexpected error processing request')
             self.send_error(500, 'Error processing request', str(e) + '\n')
 
     def process_data(self, json, signature):
@@ -45,6 +48,5 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server_address = ('', 8000)
-    httpd = HTTPServer(server_address, WebhookHTTPRequestHandler)
-    httpd.serve_forever()
+    server_address = ('', 5000)
+    run_serverclass_thread(HTTPServer(server_address, WebhookHTTPRequestHandler))

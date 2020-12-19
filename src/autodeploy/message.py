@@ -8,13 +8,13 @@ import hmac
 """
 
 
-def encode_message(json: dict, key: bytes) -> bytes:
+def encode_message(json: dict, key: str) -> bytes:
     p = json['pusher']
     n = json['repository']['full_name']
     refstr = f"{json['ref']}:{json['before']}:{json['after']}"
     pusherstr = f"{p['login']}:{p['full_name']}:{p['email']}"
     msg = f'{n}\n{refstr}\n{pusherstr}'
-    hm = hmac.new(key, msg.encode('utf8'), digestmod='sha256')
+    hm = hmac.new(key.encode('utf8'), msg.encode('utf8'), digestmod='sha256')
     return f"{msg}\n{hm.hexdigest()}".encode('utf8')
 
 

@@ -9,10 +9,8 @@ import socket
 from .message import encode_message
 from . import config
 
-
-def validate_hmac(secret: str, signature: str) -> bool:
-    h = hmac.new(secret.encode('utf8'), digestmod='sha256')
-    return hmac.compare_digest(h.hexdigest(), signature)
+import logging
+log = logging.getLogger(__name__)
 
 
 class WebhookOutput(object):
@@ -36,12 +34,12 @@ class WebhookOutput(object):
     def cfgsection(self) -> dict:
         """ Return the section in the config-structure for current repo """
         if not hasattr(self, '_cfgsec'):
-            self._cfgsec = dict(self.cfg[self.json['full_name']].items())
+            self._cfgsec = dict(self.cfg[self.json['repository']['full_name']].items())
         return self._cfgsec
 
     # Make sure is called before self.cfgsection!
     def _allowed_repo(self) -> bool:
-        return self.cfg.has_section(self.json['full_name'])
+        return self.cfg.has_section(self.json['repository']['full_name'])
 
     def _allowed_branch(self) -> bool:
         # all branches "allowable" on a bare repo
@@ -50,10 +48,20 @@ class WebhookOutput(object):
         # otherwise check branch against config file
         return self.json['ref'] == f"refs/heads/{self.cfgsection['branch']}"
 
+    def _good_signature(self, secret: str, signature: str) -> bool:
+        log.debug("validate hmac %s -> %s", secret, signature)
+        h = hmac.new(secret.encode('utf8'), digestmod='sha256')
+        h.update(self.data)
+        return hmac.compare_digest(h.hexdigest(), signature)
+
     def validate(self) -> bool:
-        if self._allowed_repo() and self._allowed_branch():
-            return validate_hmac(self.cfgsection['secret'], self.sig)
-        return False
+        if not self._allowed_repo():
+            log.debug('not allowed repo: %s', self.json['repository']['full_name'])
+            return False
+        if not self._allowed_branch():
+            log.debug('not allowed repo: %s', self.json['ref'])
+            return False
+        return self._good_signature(self.cfgsection['secret'], self.sig)
 
     def notify_daemon(self) -> Tuple[str, bool]:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)

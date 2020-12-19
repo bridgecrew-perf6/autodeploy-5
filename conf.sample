@@ -10,6 +10,9 @@ loglevel = debug
 # Log location, stdout, file-path, or syslog
 loglocation = stderr
 
+# Address to send emails to -- if absent don't send
+smtp_addr = localhost:25
+
 # Section name is from "full_name" of webhook output for "repository"
 [repo/fullname]
 # Upstream URL to fetch from. Must be non-interactive, so set up deploy-keys
