@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+
+from autodeploy import socket_path
 from autodeploy.util import run_serverclass_thread
 from autodeploy.webhook import WebhookOutput
+from autodeploy.message import encode_message, send_message
+
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import logging
@@ -43,7 +47,8 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
         if not data.validate():
             self.answer(403, 'Invalid signature or repo')
             return
-        response, ok = data.notify_daemon()
+        msgpkt = encode_message(data.json, signature)
+        response, ok = send_message(msgpkt, socket_path)
         log.info("Finished daemon: %s, %s", response, ok)
         if not ok:
             self.answer(500, 'Error processing repo', response)

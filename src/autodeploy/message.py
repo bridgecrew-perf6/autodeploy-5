@@ -1,3 +1,6 @@
+from typing import Tuple
+
+import socket
 import hmac
 
 """ Message format:
@@ -43,6 +46,30 @@ class Message(object):
         hm = hmac.new(key, m.encode('utf8'), 'sha256')
         return hmac.compare_digest(hm.hexdigest(), self.digest)
 
+
+def send_message(msg_bytes: bytes, unixsocket: str) -> Tuple[str, bool]:
+    """ Act as a client to the daemon SyncServer, taking an encoded message
+        sending it to the daemon at @unixsocket, and returning the answer
+
+        Returns the answer and status from the daemon
+    """
+
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+        s.connect(unixsocket)
+
+        s.sendall(msg_bytes)
+        s.shutdown(socket.SHUT_WR)
+        data = b''
+        while True:
+            chunk = s.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+        ans = data.decode('utf8')
+    ok = True
+    if ans.split('\n')[0] != "OK":
+        ok = False
+    return ans, ok
 
 if __name__ == "__main__":
     msg = b'refs/heads/xxx:123abc:456ffe\nwillsk:William Strecker-Kellogg:willsk@bnl.gov\n012fffdeadbeef'

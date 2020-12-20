@@ -1,13 +1,13 @@
 # Server that receives a signed compact "message" class that will put a gitrepo
 # locally into such a state as is contained in the message
 
-from typing import Union
+from typing import Union, Tuple
 
 import socket
 import logging
 from socketserver import UnixStreamServer, BaseRequestHandler
 
-from .message import Message
+from .message import Message, encode_message
 from . import config
 
 from .repo import GitRepo, GitExcept
@@ -44,12 +44,16 @@ class SyncRequestHandler(BaseRequestHandler):
             raise ValueError(f'Invalid signature on {msg.repo}')
 
         try:
-            make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
+            if sec.getboolean('bare'):
+                update_repo(sec['local'], sec['url'])
+            else:
+                make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
             log.info("GitRepo at %s synced %s --> %s by %s <%s>",
                      sec['local'], msg.before, msg.state, msg.fullname, msg.email)
         except GitExcept as e:
             log.exception("Exception with git: %s", e)
             raise
+
         return run_postscript_and_notify(msg, sec['local'], sec.get('postscript'))
 
     def handle(self):
@@ -64,13 +68,18 @@ class SyncRequestHandler(BaseRequestHandler):
 
 def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> None:
     """ Make sure git repo from @url is in state @newhash in folder @path """
-    git = GitRepo(path, url)
-    git.fetch()
-    current_hash = git.current_state('HEAD')
+    git = update_repo(path, url)
+    current_hash = git.rev_parse('HEAD')
     if oldhash != current_hash:
         log.warning("Repo in unexpected state (%s) != upstream (%s)",
                     current_hash, oldhash)
     git.reset(newhash)
+
+
+def update_repo(path: str, url: str) -> GitRepo:
+    git = GitRepo(path, url)
+    git.fetch()
+    return git
 
 
 def run_postscript_and_notify(m: Message, path: str, script: Union[str, None]) -> bytes:

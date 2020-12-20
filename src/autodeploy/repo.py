@@ -11,6 +11,9 @@ class GitExcept(Exception):
 
 
 class GitRepo(object):
+    """ Represent a git repository as checked out on a server with an optional
+        upstream url and possible bare
+    """
 
     def __init__(self, dir, remote=None, bare=False):
         self.dir = dir
@@ -23,10 +26,11 @@ class GitRepo(object):
             if rc != 0:
                 log.error("Error cloning %s into %s\n%s", remote, parent, output)
                 raise GitExcept("Clone error")
-        if self.exists():
-            pass
+        elif bare and self.exists():
+            if self.rev_parse('--is-bare-repository') != 'true':
+                raise GitExcept('Bare repo at {0} is not actually bare')
 
-    def current_state(self, ref):
+    def rev_parse(self, ref):
         hash, rc = get_output('git rev-parse {0}'.format(ref), cwd=self.dir)
         return hash.decode('ascii').strip('\n') if rc == 0 else None
 

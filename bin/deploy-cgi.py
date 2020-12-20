@@ -2,7 +2,9 @@
 import sys
 import os
 
+from autodeploy import socket_path
 from autodeploy.webhook import WebhookOutput
+from autodeploy.message import send_message, encode_message
 
 print("Content-type: text/plain")
 
@@ -23,7 +25,7 @@ def recieve_and_submit(data, sig):
     data = WebhookOutput(data, sig)
     if not data.validate():
         err_exit('Unknown repo or invalid signature', 403)
-    return data.notify_daemon()
+    return send_message(encode_message(data.json, sig), socket_path)
 
 
 if __name__ == '__main__':

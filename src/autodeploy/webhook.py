@@ -4,9 +4,7 @@ from typing import Union, Dict, Any, Tuple  # noqa
 
 import json
 import hmac
-import socket
 
-from .message import encode_message
 from . import config
 
 import logging
@@ -68,21 +66,3 @@ class WebhookOutput(object):
                         self.reponame, self.json['ref'])
             return False
         return True
-
-    def notify_daemon(self) -> Tuple[str, bool]:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-            s.connect(self.cfgsection['socket'])
-            msg_bytes = encode_message(self.json, self.cfgsection['secret'])
-            s.sendall(msg_bytes)
-            s.shutdown(socket.SHUT_WR)
-            data = b''
-            while True:
-                chunk = s.recv(4096)
-                if not chunk:
-                    break
-                data += chunk
-            ans = data.decode('utf8')
-        ok = True
-        if ans.split('\n')[0] != "OK":
-            ok = False
-        return ans, ok
