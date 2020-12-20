@@ -18,7 +18,7 @@ def setup_logging():
     loglevel = 'debug' if '-d' in sys.argv else config['DEFAULT'].get('loglevel', 'info')
     lvl = getattr(logging, loglevel.upper())
 
-    c = {'level': lvl, 'format': r'%(asctime)-15s %(levelname)s %(message)s'}
+    c = {'level': lvl, 'format': r'%(asctime)-15s %(name)s %(levelname)s %(message)s'}
 
     loc = config['DEFAULT'].get('loglocation', 'stderr')
     if loc == 'stdout':

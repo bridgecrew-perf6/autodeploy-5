@@ -8,9 +8,15 @@ import smtplib
 
 from email.message import EmailMessage
 
+import logging
 
-def get_output(cmd: str, cwd: str = '') -> Tuple[bytes, int]:
-    p = subprocess.run(shlex.split(cmd), cwd=cwd, stdout=subprocess.PIPE,
+log = logging.getLogger(__name__)
+
+
+def get_output(cmd: str, cwd: str = '.') -> Tuple[bytes, int]:
+    args = shlex.split(cmd)
+    log.debug("Running %s (in %s)", args, cwd)
+    p = subprocess.run(args, cwd=cwd, stdout=subprocess.PIPE,
                        stderr=subprocess.STDOUT)
     return p.stdout, p.returncode
 

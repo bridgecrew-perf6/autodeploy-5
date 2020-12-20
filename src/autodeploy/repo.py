@@ -5,22 +5,26 @@ from .util import get_output
 
 log = logging.getLogger(__name__)
 
+
 class GitExcept(Exception):
     pass
 
 
 class GitRepo(object):
 
-    def __init__(self, dir, remote=None):
+    def __init__(self, dir, remote=None, bare=False):
         self.dir = dir
         if remote and not self.exists():
             log.info("Cloning %s into %s", remote, dir)
             parent = os.path.abspath(os.path.join(self.dir, os.pardir))
-            output, rc = get_output('git clone {0} {1}'.format(remote, dir),
+            ifbare = '--bare ' if bare else ''
+            output, rc = get_output('git clone {2}{0} {1}'.format(remote, dir, ifbare),
                                     cwd=parent)
             if rc != 0:
                 log.error("Error cloning %s into %s\n%s", remote, parent, output)
                 raise GitExcept("Clone error")
+        if self.exists():
+            pass
 
     def current_state(self, ref):
         hash, rc = get_output('git rev-parse {0}'.format(ref), cwd=self.dir)
@@ -28,6 +32,7 @@ class GitRepo(object):
 
     def fetch(self):
         out, rc = get_output('git fetch', cwd=self.dir)
+        log.debug("git fetching in %s", self.dir)
         if rc != 0:
             log.error("Error running git-fetch: %s", out)
             raise GitExcept("Error running git-fetch")
@@ -42,6 +47,7 @@ class GitRepo(object):
 
     def reset(self, hash):
         out, r = get_output(f'git reset --hard {hash}', cwd=self.dir)
+        log.debug("git resetting to %s", hash)
         if r != 0:
             log.error("Error resetting to %s:\n%s", hash, out)
             raise GitExcept("Error git hard-reset")

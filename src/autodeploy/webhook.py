@@ -31,43 +31,57 @@ class WebhookOutput(object):
         return self._processed_json
 
     @property
-    def cfgsection(self) -> dict:
+    def reponame(self) -> str:
+        return self.json['repository']['full_name']
+
+    @property
+    def cfgsection(self):
         """ Return the section in the config-structure for current repo """
         if not hasattr(self, '_cfgsec'):
-            self._cfgsec = dict(self.cfg[self.json['repository']['full_name']].items())
+            self._cfgsec = self.cfg[self.reponame]
         return self._cfgsec
 
     # Make sure is called before self.cfgsection!
     def _allowed_repo(self) -> bool:
-        return self.cfg.has_section(self.json['repository']['full_name'])
+        return self.cfg.has_section(self.reponame)
 
     def _allowed_branch(self) -> bool:
         # all branches "allowable" on a bare repo
-        if self.cfgsection.get('bare', False):
+        if self.cfgsection.getboolean('bare', False):
             return True
         # otherwise check branch against config file
         return self.json['ref'] == f"refs/heads/{self.cfgsection['branch']}"
 
     def _good_signature(self, secret: str, signature: str) -> bool:
-        log.debug("validate hmac %s -> %s", secret, signature)
-        h = hmac.new(secret.encode('utf8'), digestmod='sha256')
-        h.update(self.data)
+        h = hmac.new(secret.encode('utf8'), self.data, digestmod='sha256')
         return hmac.compare_digest(h.hexdigest(), signature)
 
     def validate(self) -> bool:
         if not self._allowed_repo():
-            log.debug('not allowed repo: %s', self.json['repository']['full_name'])
+            log.warning('Not an allowed repo: %s', self.reponame)
             return False
         if not self._allowed_branch():
-            log.debug('not allowed repo: %s', self.json['ref'])
+            log.debug('Not an allowed branch on %s: %s', self.reponame, self.json['ref'])
             return False
-        return self._good_signature(self.cfgsection['secret'], self.sig)
+        if not self._good_signature(self.cfgsection['secret'], self.sig):
+            log.warning('Invalid signature detected on request for %s - %s',
+                        self.reponame, self.json['ref'])
+            return False
+        return True
 
     def notify_daemon(self) -> Tuple[str, bool]:
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        msg_bytes = encode_message(self.json, self.cfgsection['secret'])
-        s.sendto(msg_bytes, self.cfgsection['socket'])
-        ans = s.recv(4096).decode('utf8')
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            s.connect(self.cfgsection['socket'])
+            msg_bytes = encode_message(self.json, self.cfgsection['secret'])
+            s.sendall(msg_bytes)
+            s.shutdown(socket.SHUT_WR)
+            data = b''
+            while True:
+                chunk = s.recv(4096)
+                if not chunk:
+                    break
+                data += chunk
+            ans = data.decode('utf8')
         ok = True
         if ans.split('\n')[0] != "OK":
             ok = False
