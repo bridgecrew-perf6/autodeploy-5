@@ -1,24 +1,28 @@
 #!/usr/bin/python3
 
-from typing import Union, Dict, Any, Tuple  # noqa
+from typing import AnyStr
 
 import json
 import hmac
+import logging
 
 from . import config
 
-import logging
+
 log = logging.getLogger(__name__)
 
 
 class WebhookOutput(object):
+    """ Object representing a processed JSON document from the output of
+        a Gitea webhook that does the verification of the signature and
+        allowed-repos from the config-file.
+    """
 
-    def __init__(self, data: Union[str, bytes], signature: str):
+    def __init__(self, data: AnyStr, signature: str):
         if isinstance(data, str):
             self.data = data.encode('utf8')
         else:
             self.data = data
-        self.cfg = config
         self.sig = signature
 
     # The json from the webhook should always be a dictionary, not a list
@@ -33,22 +37,22 @@ class WebhookOutput(object):
         return self.json['repository']['full_name']
 
     @property
-    def cfgsection(self):
+    def cfg(self):
         """ Return the section in the config-structure for current repo """
         if not hasattr(self, '_cfgsec'):
-            self._cfgsec = self.cfg[self.reponame]
+            self._cfgsec = config[self.reponame]
         return self._cfgsec
 
-    # Make sure is called before self.cfgsection!
+    # Make sure is called before self.cfg!
     def _allowed_repo(self) -> bool:
-        return self.cfg.has_section(self.reponame)
+        return config.has_section(self.reponame)
 
     def _allowed_branch(self) -> bool:
         # all branches "allowable" on a bare repo
-        if self.cfgsection.getboolean('bare', False):
+        if self.cfg.getboolean('bare', False):
             return True
         # otherwise check branch against config file
-        return self.json['ref'] == f"refs/heads/{self.cfgsection['branch']}"
+        return self.json['ref'] == f"refs/heads/{self.cfg['branch']}"
 
     def _good_signature(self, secret: str, signature: str) -> bool:
         h = hmac.new(secret.encode('utf8'), self.data, digestmod='sha256')
@@ -61,7 +65,7 @@ class WebhookOutput(object):
         if not self._allowed_branch():
             log.debug('Not an allowed branch on %s: %s', self.reponame, self.json['ref'])
             return False
-        if not self._good_signature(self.cfgsection['secret'], self.sig):
+        if not self._good_signature(self.cfg['secret'], self.sig):
             log.warning('Invalid signature detected on request for %s - %s',
                         self.reponame, self.json['ref'])
             return False

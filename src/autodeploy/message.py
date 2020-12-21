@@ -1,3 +1,6 @@
+# Methods so take the webhook output json and turn it into a "message" packet
+# and to construct a usefull class from that packet that the daemon can use
+
 from typing import Tuple
 
 import socket
@@ -33,7 +36,7 @@ class Message(object):
     digest:   str   # signature digest
 
     @classmethod
-    def from_msg(cls, msg: bytes):
+    def from_msg(cls, msg: bytes) -> 'Message':
         c = cls()
         c.repo, ref, person, c.digest = msg.decode('utf8').split('\n')
         c.branch, c.before, c.state = ref.split(':')
@@ -54,6 +57,8 @@ def send_message(msg_bytes: bytes, unixsocket: str) -> Tuple[str, bool]:
         Returns the answer and status from the daemon
     """
 
+    # Connect send and signal we're done with the socket before
+    # getting the reply from the daemon
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
         s.connect(unixsocket)
 
@@ -65,12 +70,5 @@ def send_message(msg_bytes: bytes, unixsocket: str) -> Tuple[str, bool]:
             if not chunk:
                 break
             data += chunk
-        ans = data.decode('utf8')
-    ok = True
-    if ans.split('\n')[0] != "OK":
-        ok = False
-    return ans, ok
-
-if __name__ == "__main__":
-    msg = b'refs/heads/xxx:123abc:456ffe\nwillsk:William Strecker-Kellogg:willsk@bnl.gov\n012fffdeadbeef'
-    m = Message.from_msg(msg)
+        ans = data.decode('utf8').split('\n')
+    return '\n'.join(ans[1:]), ans[0] == 'OK'

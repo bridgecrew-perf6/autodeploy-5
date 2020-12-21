@@ -47,9 +47,9 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
         if not data.validate():
             self.answer(403, 'Invalid signature or repo')
             return
-        msgpkt = encode_message(data.json, signature)
+        msgpkt = encode_message(data.json, data.cfg['secret'])
         response, ok = send_message(msgpkt, socket_path)
-        log.info("Finished daemon: %s, %s", response, ok)
+        log.info("Daemon success == %s", ok)
         if not ok:
             self.answer(500, 'Error processing repo', response)
         else:

@@ -1,12 +1,15 @@
-from typing import Tuple
+from typing import Tuple, List
 import subprocess
 import signal
 import threading
 import shlex
+import enum
 
 import smtplib
 
 from email.message import EmailMessage
+
+from autodeploy import mail_host
 
 import logging
 
@@ -28,7 +31,7 @@ def send_email(to: str, sub: str, message: str, sender: str = 'Deploy Daemon <ro
     msg['From'] = sender
     msg['To'] = to
 
-    s = smtplib.SMTP('localhost')
+    s = smtplib.SMTP(mail_host)
     s.send_message(msg)
     s.quit()
 
@@ -37,8 +40,10 @@ class StopServer(Exception):
     pass
 
 
-def run_serverclass_thread(srv, stopsigs=[signal.SIGTERM, signal.SIGINT]):
-
+def run_serverclass_thread(srv, stopsigs: List[enum.IntEnum] = [signal.SIGTERM, signal.SIGINT]):
+    """ Run a server in another thread while pause() in current thread to
+        handle signals to request a clean shutdown
+    """
     def sighandle(signal, frame):
         raise StopServer()
 

@@ -4,7 +4,7 @@ import os
 import sys
 import itertools
 
-__all__ = ['config', 'socket_path']
+__all__ = ['config', 'socket_path', 'mail_host']
 
 cfgfile = os.getenv('AUTODEPLOYCFG', '/etc/autodeploy.cfg')
 
@@ -31,5 +31,6 @@ def setup_logging():
 
 
 socket_path = config['DEFAULT']['socket']
+mail_host = config['DEFAULT'].get('smtphost')
 
 setup_logging()

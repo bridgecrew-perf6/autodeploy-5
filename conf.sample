@@ -11,7 +11,7 @@ loglevel = debug
 loglocation = stderr
 
 # Address to send emails to -- if absent don't send
-smtp_addr = localhost:25
+smtphost = localhost
 
 # Section name is from "full_name" of webhook output for "repository"
 [repo/fullname]

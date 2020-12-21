@@ -1,3 +1,5 @@
+from typing import Union
+
 import os
 import logging
 
@@ -15,7 +17,9 @@ class GitRepo(object):
         upstream url and possible bare
     """
 
-    def __init__(self, dir, remote=None, bare=False):
+    def __init__(self, dir: str, remote: Union[str, None] = None, bare: bool = False):
+        """ Clone the repo in constructor if not exists and @remote is given """
+
         self.dir = dir
         if remote and not self.exists():
             log.info("Cloning %s into %s", remote, dir)
@@ -30,26 +34,26 @@ class GitRepo(object):
             if self.rev_parse('--is-bare-repository') != 'true':
                 raise GitExcept('Bare repo at {0} is not actually bare')
 
-    def rev_parse(self, ref):
+    def rev_parse(self, ref) -> Union[None, str]:
         hash, rc = get_output('git rev-parse {0}'.format(ref), cwd=self.dir)
         return hash.decode('ascii').strip('\n') if rc == 0 else None
 
-    def fetch(self):
+    def fetch(self) -> None:
         out, rc = get_output('git fetch', cwd=self.dir)
         log.debug("git fetching in %s", self.dir)
         if rc != 0:
             log.error("Error running git-fetch: %s", out)
             raise GitExcept("Error running git-fetch")
 
-    def exists(self):
+    def exists(self) -> bool:
         return os.path.exists(self.dir)
 
-    def current_ref(self, ref='HEAD'):
+    def current_ref(self, ref='HEAD') -> Union[None, str]:
         out, r = get_output('git symbolic-ref --short -q {0}'.format(ref),
                             cwd=self.dir)
         return out.decode('ascii').strip('\n') if r == 0 else None
 
-    def reset(self, hash):
+    def reset(self, hash) -> None:
         out, r = get_output(f'git reset --hard {hash}', cwd=self.dir)
         log.debug("git resetting to %s", hash)
         if r != 0:
