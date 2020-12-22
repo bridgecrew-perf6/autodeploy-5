@@ -1,4 +1,5 @@
-recursive-include systemd/* *
 include MANIFEST.in
 include README.md
 include conf.sample
+include systemd/autodeployd.service
+include systemd/autodeploy-webserver.service
