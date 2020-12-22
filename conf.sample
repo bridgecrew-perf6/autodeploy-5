@@ -13,6 +13,8 @@ loglocation = stderr
 # Address to send emails to -- if absent don't send
 smtphost = localhost
 
+daemonkey = Cccchhangemoi!
+
 # Section name is from "full_name" of webhook output for "repository"
 [repo/fullname]
 # Upstream URL to fetch from. Must be non-interactive, so set up deploy-keys

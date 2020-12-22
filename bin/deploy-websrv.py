@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# A standalone web server that takes a Gitea webhook POST request and sends it
+# to a running deploy-daemon locally. Contrast with deploy-cgi.py for a version
+# that runs as a CGI script under an existing webserver. They do the same thing
+# but this has a standalone server.
+
 from autodeploy import socket_path
 from autodeploy.util import run_serverclass_thread
 from autodeploy.webhook import WebhookOutput

@@ -17,6 +17,8 @@ log = logging.getLogger(__name__)
 
 
 def get_output(cmd: str, cwd: str = '.') -> Tuple[bytes, int]:
+    """ Run a command (interpreted via shlex) and return output, exit-code """
+
     args = shlex.split(cmd)
     log.debug("Running %s (in %s)", args, cwd)
     p = subprocess.run(args, cwd=cwd, stdout=subprocess.PIPE,
@@ -25,6 +27,8 @@ def get_output(cmd: str, cwd: str = '.') -> Tuple[bytes, int]:
 
 
 def send_email(to: str, sub: str, message: str, sender: str = 'Deploy Daemon <root@localhost>'):
+    """ Send an email message to configured SMTP server """
+
     msg = EmailMessage()
     msg.set_content(message)
     msg['Subject'] = sub

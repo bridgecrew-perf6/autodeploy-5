@@ -1,4 +1,6 @@
-#!/usr/bin/python3
+# Represent the output of a Gitea repository's webhook data (json) and the
+# signature (from the header) as an object that can be verified against the
+# config file.
 
 from typing import AnyStr
 

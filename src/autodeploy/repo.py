@@ -1,3 +1,6 @@
+# Represent a Git repository checked out on disk with methods to clone/fetch/read
+# info about it.
+
 from typing import Union
 
 import os

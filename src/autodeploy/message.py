@@ -1,20 +1,21 @@
 # Methods so take the webhook output json and turn it into a "message" packet
 # and to construct a usefull class from that packet that the daemon can use
+#
+# Message format:
+#        repo-name \\n
+#        branch:hashofoldstate:hashofnewstate \\n
+#        username:person-name:email \\n
+#        signature
 
 from typing import Tuple
 
 import socket
 import hmac
 
-""" Message format:
-        repo-name \\n
-        branch:hashofoldstate:hashofnewstate \\n
-        username:person-name:email \\n
-        signature
-"""
-
 
 def encode_message(json: dict, key: str) -> bytes:
+    """ Make a "message packet" (bytes) for transmitting over the wire """
+
     p = json['pusher']
     n = json['repository']['full_name']
     refstr = f"{json['ref']}:{json['before']}:{json['after']}"

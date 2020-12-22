@@ -93,6 +93,7 @@ class SyncRequestHandler(BaseRequestHandler):
 
 def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> None:
     """ Make sure git repo from @url is in state @newhash in folder @path """
+
     git = update_repo(path, url, False)
     current_hash = git.rev_parse('HEAD')
     if oldhash != current_hash:
@@ -103,6 +104,7 @@ def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> None:
 
 def update_repo(path: str, url: str, bare: bool) -> GitRepo:
     """ Run a fetch in the repo given """
+
     git = GitRepo(path, url, bare)
     git.fetch()
     return git
@@ -134,6 +136,10 @@ class SyncServer(UnixStreamServer):
         super().__init__(config['DEFAULT']['socket'], SyncRequestHandler)
 
     def server_bind(self):
+        """ Create a unix socket, mimicing the owner / permissions of an
+            existing socket if one exists
+        """
+
         try:
             st = os.stat(self.server_address)
         except OSError:
