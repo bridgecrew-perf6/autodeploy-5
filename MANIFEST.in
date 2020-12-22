@@ -1,0 +1,4 @@
+recursive-include systemd/* *
+include MANIFEST.in
+include README.md
+include conf.sample
