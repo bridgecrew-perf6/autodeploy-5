@@ -9,19 +9,22 @@
 
 from typing import Tuple
 
+from autodeploy import daemon_key
+
 import socket
 import hmac
 
 
-def encode_message(json: dict, key: str) -> bytes:
-    """ Make a "message packet" (bytes) for transmitting over the wire """
-
+def encode_message(json: dict) -> bytes:
+    """ Make a "message packet" (bytes) for transmitting over the wire
+        and sign it with the key from the configfile for the daemon
+    """
     p = json['pusher']
     n = json['repository']['full_name']
     refstr = f"{json['ref']}:{json['before']}:{json['after']}"
     pusherstr = f"{p['login']}:{p['full_name']}:{p['email']}"
     msg = f'{n}\n{refstr}\n{pusherstr}'
-    hm = hmac.new(key.encode('utf8'), msg.encode('utf8'), digestmod='sha256')
+    hm = hmac.new(daemon_key, msg.encode('utf8'), digestmod='sha256')
     return f"{msg}\n{hm.hexdigest()}".encode('utf8')
 
 
@@ -44,10 +47,13 @@ class Message(object):
         c.pusher, c.fullname, c.email = person.split(':')
         return c
 
-    def verify(self, key: bytes) -> bool:
+    def verify(self) -> bool:
+        """ Verify the signature of this message against the key in the
+            config file
+        """
         m = f"{self.repo}\n{self.branch}:{self.before}:{self.state}\n"
         m += f"{self.pusher}:{self.fullname}:{self.email}"
-        hm = hmac.new(key, m.encode('utf8'), 'sha256')
+        hm = hmac.new(daemon_key, m.encode('utf8'), 'sha256')
         return hmac.compare_digest(hm.hexdigest(), self.digest)
 
 

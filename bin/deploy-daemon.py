@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from autodeploy.daemon import SyncServer
-from autodeploy.util import run_serverclass_thread
+from autodeploy.daemon import daemon_main
+
 
 if __name__ == "__main__":
-    run_serverclass_thread(SyncServer())
+    daemon_main()

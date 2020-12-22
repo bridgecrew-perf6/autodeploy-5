@@ -22,7 +22,7 @@ from .message import Message
 from . import config, mail_host
 
 from .repo import GitRepo, GitExcept
-from .util import get_output, send_email
+from .util import get_output, send_email, run_serverclass_thread
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class SyncRequestHandler(BaseRequestHandler):
 
         # Validate HMAC of "message" bytes from the client
         sec = config[msg.repo]
-        if not msg.verify(sec['secret'].encode('utf8')):
+        if not msg.verify():
             raise ValueError(f'Invalid signature on {msg.repo}')
 
         try:
@@ -156,3 +156,7 @@ class SyncServer(UnixStreamServer):
             os.chmod(self.server_address, st.st_mode)
 
         self.server_address = self.socket.getsockname()
+
+
+def daemon_main():
+    run_serverclass_thread(SyncServer())
