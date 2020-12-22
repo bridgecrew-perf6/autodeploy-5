@@ -9,7 +9,7 @@
 # daemon can run as root or another user who will actually own the files in the
 # end...
 
-from typing import Optional
+from typing import Optional, Union
 
 import socket
 import logging
@@ -132,28 +132,38 @@ setting state {m.state} for branch {m.branch}.
 
 class SyncServer(UnixStreamServer):
 
+    # Explicit string server_address
+    sa: str = config['DEFAULT']['socket']
+
     def __init__(self):
-        super().__init__(config['DEFAULT']['socket'], SyncRequestHandler)
+        super().__init__(self.sa, SyncRequestHandler)
+
+    def _stat_socket(self) -> Optional[os.stat_result]:
+        """ Return socket stat only if it exists, raising error if it exists
+            and isn't a socket
+        """
+        try:
+            st = os.stat(self.sa)
+        except OSError:
+            return None
+        if not stat.S_ISSOCK(st.st_mode):
+            raise Exception("Address exists and is not a socket")
+        return st
 
     def server_bind(self):
-        """ Create a unix socket, mimicing the owner / permissions of an
-            existing socket if one exists
+        """ Create a unix socket, mimicing the owner / group / permissions of
+            an existing socket if one exists
         """
 
-        try:
-            st = os.stat(self.server_address)
-        except OSError:
-            exists_already = False
-        else:
-            exists_already = True
-            if not stat.S_ISSOCK(st.st_mode):
-                raise Exception("Address exists and is not a socket")
+        st = self._stat_socket()
+        if st:
             os.unlink(self.server_address)
 
         self.socket.bind(self.server_address)
-        if exists_already:
+
+        if st:
             os.chown(self.server_address, st.st_uid, st.st_gid)
-            os.chmod(self.server_address, st.st_mode)
+        os.chmod(self.server_address, st.st_mode if st else 0o777)
 
         self.server_address = self.socket.getsockname()
 

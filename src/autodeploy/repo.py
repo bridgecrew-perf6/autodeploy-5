@@ -1,7 +1,7 @@
 # Represent a Git repository checked out on disk with methods to clone/fetch/read
 # info about it.
 
-from typing import Union
+from typing import Optional
 
 import os
 import logging
@@ -20,7 +20,7 @@ class GitRepo(object):
         upstream url and possible bare
     """
 
-    def __init__(self, dir: str, remote: Union[str, None] = None, bare: bool = False):
+    def __init__(self, dir: str, remote: Optional[str] = None, bare: bool = False):
         """ Clone the repo in constructor if not exists and @remote is given """
 
         self.dir = dir
@@ -37,7 +37,7 @@ class GitRepo(object):
             if self.rev_parse('--is-bare-repository') != 'true':
                 raise GitExcept('Bare repo at {0} is not actually bare')
 
-    def rev_parse(self, ref) -> Union[None, str]:
+    def rev_parse(self, ref) -> Optional[str]:
         hash, rc = get_output('git rev-parse {0}'.format(ref), cwd=self.dir)
         return hash.decode('ascii').strip('\n') if rc == 0 else None
 
@@ -51,7 +51,7 @@ class GitRepo(object):
     def exists(self) -> bool:
         return os.path.exists(self.dir)
 
-    def current_ref(self, ref='HEAD') -> Union[None, str]:
+    def current_ref(self, ref='HEAD') -> Optional[str]:
         out, r = get_output('git symbolic-ref --short -q {0}'.format(ref),
                             cwd=self.dir)
         return out.decode('ascii').strip('\n') if r == 0 else None

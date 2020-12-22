@@ -26,7 +26,7 @@ def recieve_and_submit(data, sig):
     data = WebhookOutput(data, sig)
     if not data.validate():
         err_exit('Unknown repo or invalid signature', 403)
-    return send_message(encode_message(data.json, data.cfg['secret']), socket_path)
+    return send_message(encode_message(data.json), socket_path)
 
 
 if __name__ == '__main__':

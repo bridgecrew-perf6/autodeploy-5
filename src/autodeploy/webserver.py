@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # A standalone web server that takes a Gitea webhook POST request and sends it
 # to a running deploy-daemon locally. Contrast with deploy-cgi.py for a version
 # that runs as a CGI script under an existing webserver. They do the same thing
@@ -52,7 +50,7 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
         if not data.validate():
             self.answer(403, 'Invalid signature or repo')
             return
-        msgpkt = encode_message(data.json, data.cfg['secret'])
+        msgpkt = encode_message(data.json)
         response, ok = send_message(msgpkt, socket_path)
         log.info("Daemon success == %s", ok)
         if not ok:
@@ -61,6 +59,10 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
             self.answer(200, 'Git repo sync OK', response)
 
 
-if __name__ == "__main__":
-    server_address = ('', 5000)
-    run_serverclass_thread(HTTPServer(server_address, WebhookHTTPRequestHandler))
+class WebhookRecvServer(HTTPServer):
+    def __init__(self, port):
+        super().__init__(('', port), WebhookHTTPRequestHandler)
+
+
+def websrv_main():
+    run_serverclass_thread(WebhookRecvServer(5000))
