@@ -1,0 +1,15 @@
+[Unit]
+Description=AudoDeploy from Gitea: Sync-daemon component
+After=network.service
+Require=network.service
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/
+ExecStart=/usr/sbin/autodeployd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=AudoDeploy from Gitea: Standalone web-server component
+After=network.service
+Require=network.service
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/
+ExecStart=/usr/sbin/autodeploy-webd -p 5000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

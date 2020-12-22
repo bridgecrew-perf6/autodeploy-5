@@ -64,5 +64,5 @@ class WebhookRecvServer(HTTPServer):
         super().__init__(('', port), WebhookHTTPRequestHandler)
 
 
-def websrv_main():
+def daemon_main():
     run_serverclass_thread(WebhookRecvServer(5000))
