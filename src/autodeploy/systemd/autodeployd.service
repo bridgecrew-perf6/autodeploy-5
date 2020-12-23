@@ -7,7 +7,7 @@ Require=network.service
 User=root
 Group=root
 WorkingDirectory=/
-ExecStart=/usr/sbin/autodeployd
+ExecStart=/usr/bin/autodeployd
 Restart=always
 RestartSec=5
 

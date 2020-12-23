@@ -7,7 +7,7 @@ Require=network.service
 User=nobody
 Group=nobody
 WorkingDirectory=/
-ExecStart=/usr/sbin/autodeploy-webd -p 5000
+ExecStart=/usr/bin/autodeploy-webd -p 5000
 Restart=always
 RestartSec=5
 
