@@ -4,8 +4,8 @@ After=network.service
 Require=network.service
 
 [Service]
-User=nobody
-Group=nobody
+User=autodeploywebd
+Group=autodeploywebd
 WorkingDirectory=/
 ExecStart=/usr/bin/autodeploy-webd -p 5000
 Restart=always

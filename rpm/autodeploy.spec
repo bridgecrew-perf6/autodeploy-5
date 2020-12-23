@@ -53,7 +53,6 @@ alternative to the CGI script in the example directory of the autodeploy package
 %py3_install
 mkdir -p %{buildroot}%{_unitdir}
 mkdir -p %{buildroot}%{_sysconfdir}
-mkdir %{buildroot}%{python3_sitelib}/%{pkgname}/cgi-example/
 
 # Systemd units
 mv %{buildroot}%{python3_sitelib}/%{pkgname}/systemd/* \
@@ -77,6 +76,9 @@ systemctl daemon-reload
 
 %post webserver
 systemctl daemon-reload
+
+%preun webserver
+%systemd_preun autodeploy-webserver.service
 
 %files
 %doc README.md

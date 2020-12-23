@@ -10,6 +10,7 @@ from autodeploy.message import encode_message, send_message
 
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import sys
 import logging
 
 log = logging.getLogger(__name__)
@@ -65,4 +66,7 @@ class WebhookRecvServer(HTTPServer):
 
 
 def daemon_main():
-    run_serverclass_thread(WebhookRecvServer(5000))
+    port = 5000
+    if '-p' in sys.argv:
+        port = int(sys.argv[sys.argv.index('-p') + 1])
+    run_serverclass_thread(WebhookRecvServer(port))
