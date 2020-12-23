@@ -7,8 +7,8 @@ Summary: An agent to listen for repo webhooks and securely deploy them
 Version: %{version}
 Release: %{release}
 Source0: %{pkgname}-%{version}.tar.gz
-License: INTERNAL
-Group: Development/Libraries
+License: GPLv3+
+Group: Applications/System
 BuildArch: noarch
 Vendor: William Strecker-Kellogg <willsk@bnl.gov>
 Provides: autodeploy
