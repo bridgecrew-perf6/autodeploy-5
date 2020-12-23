@@ -1,0 +1,5 @@
+#!/bin/bash
+systemctl stop autodeployd.service autodeploy-webserver.service 2>/dev/null
+rm -f /usr/lib/systemd/system/autodeploy-webserver.service
+rm -f /usr/lib/systemd/system/autodeployd.service
+systemctl daemon-reload
