@@ -14,19 +14,34 @@ Vendor: William Strecker-Kellogg <willsk@bnl.gov>
 Provides: autodeploy
 Url: https://git.racf.bnl.gov/gitea/willsk/autodeploy-gitea
 
+Requires: python3 >= 3.5
+
 BuildRequires: python3-setuptools
 BuildRequires: python3-devel
-BuildRequires: python3dist(setuptools)
+
+Requires(post):   systemd
+Requires(preun):  systemd
+Requires(postun): systemd
 
 %description
-# Gitdeploy
 Service to sync from a gitea webhook to a server as securely as possible
 
 There are two components to this, one receiver that takes the output of the
 webhook POST-ed by Gitea and checks the signature and validity of the branch
 and repository against the repo and key in a config file, and another that
-acts on the local filesystem by checking out the changes from the pushed webhook into a cloned repo.
+acts on the local filesystem by checking out the changes from the pushed webhook
+into a cloned repo.
 
+
+%package webserver
+Summary: Standalone webserver component recieving git-push webhook from Gitea
+Requires: python3 >= 3.5
+Requires: python3-%{pkgname}
+Requires: autodeploy == %{version}
+
+%description webserver
+A standalone webserver that that listens for Gitea webhook POST events as an
+alternative to the CGI script in the example directory of the autodeploy package
 
 %prep
 %autosetup -n %{pkgname}-%{version}
@@ -36,18 +51,45 @@ acts on the local filesystem by checking out the changes from the pushed webhook
 
 %install
 %py3_install
-mkdir -p %{buildroot}%{_prefix}/lib/systemd/system
-mv %{buildroot}%{python3_sitelib}/%{pkgname}/systemd/* %{buildroot}%{_prefix}/lib/systemd/system/
+mkdir -p %{buildroot}%{_unitdir}
+mkdir -p %{buildroot}%{_sysconfdir}
+mkdir %{buildroot}%{python3_sitelib}/%{pkgname}/cgi-example/
+
+# Systemd units
+mv %{buildroot}%{python3_sitelib}/%{pkgname}/systemd/* \
+    %{buildroot}%{_unitdir}
 rmdir %{buildroot}%{python3_sitelib}/%{pkgname}/systemd/
-mv %{buildroot}%{python3_sitelib}/%{pkgname}/conf.sample %{buildroot}%{_sysconfdir}/autodeploy.cfg
+
+# Skeleton config file
+mv %{buildroot}%{python3_sitelib}/%{pkgname}/conf.sample \
+    %{buildroot}%{_sysconfdir}/autodeploy.cfg
+
+
+%pre webserver
+getent group autodeploywebd >/dev/null || groupadd -r autodeploywebd
+getent passwd autodeploywebd >/dev/null || \
+useradd -r -g autodeploywebd -d /run/autodeploy -s /sbin/nologin \
+  -c "Runs Git-autodeploy standalone webserver" autodeploywebd
+exit 0
+
+%post
+systemctl daemon-reload
+
+%post webserver
+systemctl daemon-reload
 
 %files
-# %license LICENSE.rst
-# %doc CHANGES.rst README.rst
+%doc README.md
 %{_bindir}/%{pkgname}d
-%{_bindir}/%{pkgname}-webd
 %{python3_sitelib}/%{pkgname}-*.egg-info/
 %{python3_sitelib}/%{pkgname}/
+%{_unitdir}/autodeployd.service
+%config(noreplace) %{_sysconfdir}/autodeploy.cfg
+
+
+%files webserver
+%{_unitdir}/autodeploy-webserver.service
+%{_bindir}/%{pkgname}-webd
 
 
 %changelog

@@ -8,6 +8,7 @@ User=root
 Group=root
 WorkingDirectory=/
 ExecStart=/usr/bin/autodeployd
+RuntimeDirectory=autodeploy
 Restart=always
 RestartSec=5
 

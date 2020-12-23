@@ -1,5 +1,0 @@
-#!/bin/bash
-spd=`python3 -c 'import site; print(site.getsitepackages()[-1])'`
-cp $spd/autodeploy/systemd/*.service /usr/lib/systemd/system/
-stat /etc/autodeploy.cfg &>/dev/null || cp $spd/autodeploy/conf.sample /etc/autodeploy.cfg
-systemctl daemon-reload

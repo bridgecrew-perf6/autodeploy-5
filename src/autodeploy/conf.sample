@@ -2,7 +2,7 @@
 # ===============
 
 # Where the daemon will be listening and where webhook will push notifications
-socket = /run/sync-daemon.s
+socket = /run/autodeploy/gitsync.socket
 
 # Log level, info, debug, error, etc...
 loglevel = debug
