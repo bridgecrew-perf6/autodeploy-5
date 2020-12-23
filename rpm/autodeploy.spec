@@ -1,12 +1,12 @@
-%define name autodeploy
+%define pkgname autodeploy
 %define version 0.5.0
 %define release 1
 
-Name: python3-%{name}
+Name: python3-%{pkgname}
 Summary: An agent to listen for repo webhooks and securely deploy them
 Version: %{version}
 Release: %{release}
-Source0: %{name}-%{version}.tar.gz
+Source0: %{pkgname}-%{version}.tar.gz
 License: INTERNAL
 Group: Development/Libraries
 BuildArch: noarch
@@ -29,25 +29,25 @@ acts on the local filesystem by checking out the changes from the pushed webhook
 
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n %{pkgname}-%{version}
 
 %build
 %py3_build
 
 %install
 %py3_install
-# mv %{buildroot}%{_bindir}/%{modname}{,-%{python3_version}}
-# ln -s %{modname}-%{python3_version} %{buildroot}%{_bindir}/%{modname}-3
-# ln -sf %{modname}-3 %{buildroot}%{_bindir}/%{modname}
-
+mkdir -p %{buildroot}%{_prefix}/lib/systemd/system
+mv %{buildroot}%{python3_sitelib}/%{pkgname}/systemd/* %{buildroot}%{_prefix}/lib/systemd/system/
+rmdir %{buildroot}%{python3_sitelib}/%{pkgname}/systemd/
+mv %{buildroot}%{python3_sitelib}/%{pkgname}/conf.sample %{buildroot}%{_sysconfdir}/autodeploy.cfg
 
 %files
 # %license LICENSE.rst
 # %doc CHANGES.rst README.rst
-%{_bindir}/%{name}d
-%{_bindir}/%{name}-webd
-%{python3_sitelib}/%{name}-*.egg-info/
-%{python3_sitelib}/%{name}/
+%{_bindir}/%{pkgname}d
+%{_bindir}/%{pkgname}-webd
+%{python3_sitelib}/%{pkgname}-*.egg-info/
+%{python3_sitelib}/%{pkgname}/
 
 
 %changelog
