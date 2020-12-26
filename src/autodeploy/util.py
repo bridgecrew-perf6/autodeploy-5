@@ -4,6 +4,7 @@ import signal
 import threading
 import shlex
 import enum
+import hmac
 
 import smtplib
 
@@ -24,6 +25,13 @@ def get_output(cmd: str, cwd: str = '.') -> Tuple[bytes, int]:
     p = subprocess.run(args, cwd=cwd, stdout=subprocess.PIPE,
                        stderr=subprocess.STDOUT)
     return p.stdout, p.returncode
+
+
+def check_hmac(data: bytes, secret: str, signature: str) -> bool:
+    """ Verify the signature of @data against the @key """
+
+    h = hmac.new(secret.encode('utf8'), data, digestmod='sha256')
+    return hmac.compare_digest(h.hexdigest(), signature)
 
 
 def send_email(to: str, sub: str, message: str, sender: str = 'Deploy Daemon <root@localhost>'):

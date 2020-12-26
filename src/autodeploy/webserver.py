@@ -3,10 +3,9 @@
 # that runs as a CGI script under an existing webserver. They do the same thing
 # but this has a standalone server.
 
-from autodeploy import socket_path
 from autodeploy.util import run_serverclass_thread
-from autodeploy.webhook import WebhookOutput
-from autodeploy.message import encode_message, send_message
+from autodeploy.webhook import check_webhook_output
+from autodeploy.message import Message, send_message
 
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -36,7 +35,6 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
         webdata = self.rfile.read(postlen)
         log.debug("Got %d bytes in request from %s", postlen, self.client_address)
         sig = self.headers['X-Gitea-Signature']
-
         if not sig:
             self.answer(401, 'No signature provided')
             return
@@ -47,12 +45,11 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
             self.answer(500, 'Error processing request', str(e) + '\n')
 
     def process_data(self, json, signature):
-        data = WebhookOutput(json, signature)
-        if not data.validate():
+
+        if not check_webhook_output(json, signature):
             self.answer(403, 'Invalid signature or repo')
             return
-        msgpkt = encode_message(data.json)
-        response, ok = send_message(msgpkt, socket_path)
+        response, ok = send_message(Message.from_json(json).as_bytes())
         log.info("Daemon success == %s", ok)
         if not ok:
             self.answer(500, 'Error processing repo', response)

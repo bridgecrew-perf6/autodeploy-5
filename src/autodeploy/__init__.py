@@ -32,6 +32,6 @@ def setup_logging():
 
 socket_path = config['DEFAULT']['socket']
 mail_host = config['DEFAULT'].get('smtphost')
-daemon_key = config['DEFAULT']['daemonkey'].encode('utf8')
+daemon_key = config['DEFAULT']['daemonkey']
 
 setup_logging()

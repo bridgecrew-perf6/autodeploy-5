@@ -59,16 +59,16 @@ class SyncRequestHandler(BaseRequestHandler):
         # Already read all data in to self.data at this point
         log.debug("Daemon got raw data: %s", self.data)
         try:
-            msg = Message.from_msg(self.data)
+            msg = Message.from_bytes(self.data)
         except Exception as e:
             raise ValueError('Error decoding / invalid message sent') from e
 
         # Section names in the config file are repo names
         if msg.repo not in config:
             raise KeyError(f'Got a repo ({msg.repo}) not found in cfg=f{config}')
+        sec = config[msg.repo]
 
         # Validate HMAC of "message" bytes from the client
-        sec = config[msg.repo]
         if not msg.verify():
             raise ValueError(f'Invalid signature on {msg.repo}')
 

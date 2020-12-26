@@ -9,23 +9,13 @@
 
 from typing import Tuple
 
-from autodeploy import daemon_key
+from autodeploy import daemon_key, socket_path
+from autodeploy.util import check_hmac
 
 import socket
 import hmac
 
-
-def encode_message(json: dict) -> bytes:
-    """ Make a "message packet" (bytes) for transmitting over the wire
-        and sign it with the key from the configfile for the daemon
-    """
-    p = json['pusher']
-    n = json['repository']['full_name']
-    refstr = f"{json['ref']}:{json['before']}:{json['after']}"
-    pusherstr = f"{p['login']}:{p['full_name']}:{p['email']}"
-    msg = f'{n}\n{refstr}\n{pusherstr}'
-    hm = hmac.new(daemon_key, msg.encode('utf8'), digestmod='sha256')
-    return f"{msg}\n{hm.hexdigest()}".encode('utf8')
+__all__ = ['Message', 'send_message']
 
 
 class Message(object):
@@ -40,26 +30,46 @@ class Message(object):
     digest:   str   # signature digest
 
     @classmethod
-    def from_msg(cls, msg: bytes) -> 'Message':
+    def from_json(cls, json: dict) -> 'Message':
+        c = cls()
+        p = json['pusher']
+        c.repo = json['repository']['full_name']
+        c.branch, c.before, c.state = json['ref'], json['before'], json['after']
+        c.pusher, c.fullname, c.email = p['login'], p['full_name'], p['email']
+        return c
+
+    @classmethod
+    def from_bytes(cls, msg: bytes) -> 'Message':
         c = cls()
         c.repo, ref, person, c.digest = msg.decode('utf8').split('\n')
         c.branch, c.before, c.state = ref.split(':')
         c.pusher, c.fullname, c.email = person.split(':')
         return c
 
+    @property
+    def rawstr(self) -> str:
+        """ The packet string without the hmac at the end """
+        m = f"{self.repo}\n{self.branch}:{self.before}:{self.state}\n"
+        return m + f"{self.pusher}:{self.fullname}:{self.email}"
+
+    def as_bytes(self) -> bytes:
+        """ Make a "message packet" (bytes) for transmitting over the wire
+            and sign it with the key from the configfile for the daemon
+        """
+        hm = hmac.new(daemon_key.encode('utf8'), self.rawstr.encode('utf8'),
+                      digestmod='sha256')
+        return f"{self.rawstr}\n{hm.hexdigest()}".encode('utf8')
+
     def verify(self) -> bool:
         """ Verify the signature of this message against the key in the
             config file
         """
-        m = f"{self.repo}\n{self.branch}:{self.before}:{self.state}\n"
-        m += f"{self.pusher}:{self.fullname}:{self.email}"
-        hm = hmac.new(daemon_key, m.encode('utf8'), 'sha256')
-        return hmac.compare_digest(hm.hexdigest(), self.digest)
+        return check_hmac(self.rawstr.encode('utf8'), daemon_key, self.digest)
 
 
-def send_message(msg_bytes: bytes, unixsocket: str) -> Tuple[str, bool]:
+def send_message(msg_bytes: bytes) -> Tuple[str, bool]:
     """ Act as a client to the daemon SyncServer, taking an encoded message
-        sending it to the daemon at @unixsocket, and returning the answer
+        sending it to the daemon as configured
 
         Returns the answer and status from the daemon
     """
@@ -67,7 +77,7 @@ def send_message(msg_bytes: bytes, unixsocket: str) -> Tuple[str, bool]:
     # Connect send and signal we're done with the socket before
     # getting the reply from the daemon
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-        s.connect(unixsocket)
+        s.connect(socket_path)
 
         s.sendall(msg_bytes)
         s.shutdown(socket.SHUT_WR)
