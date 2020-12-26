@@ -3,7 +3,7 @@ import sys
 import os
 import traceback
 
-from autodeploy.webhook import check_webhook_output
+from autodeploy.webhook import process_webhook_output
 from autodeploy.message import Message, send_message
 
 print("Content-type: text/plain")
@@ -21,12 +21,13 @@ def get_signature():
         err_exit('No signature header found', 401)
 
 
-def recieve_and_submit(rawjson, sig):
+def recieve_and_submit(data: bytes, sig: str):
 
-    if not check_webhook_output(rawjson, sig):
+    json = process_webhook_output(data, sig)
+    if not json:
         err_exit('Invalid signature, repo, or branch', 403)
         return
-    return send_message(Message.from_json(rawjson).as_bytes())
+    return send_message(Message.from_json(json).as_bytes())
 
 
 if __name__ == '__main__':

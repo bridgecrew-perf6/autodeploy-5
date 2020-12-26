@@ -112,7 +112,7 @@ def update_repo(path: str, url: str, bare: bool) -> GitRepo:
 
 def run_postscript_and_notify(m: Message, path: str, script: Optional[str]) -> bytes:
 
-    msg = f"""
+    msg = f"""\
 Hello,
 
 Git Deploy was done for {m.repo} on {socket.getfqdn()} in {path}

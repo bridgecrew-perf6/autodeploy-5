@@ -9,6 +9,11 @@ __all__ = ['config', 'socket_path', 'mail_host', 'daemon_key']
 cfgfile = os.getenv('AUTODEPLOYCFG', '/etc/autodeploy.cfg')
 
 # Emulate a "DEFAULT" section by injecting it before the first line of file
+
+mode = os.stat(cfgfile).st_mode
+if mode & 0b110:
+    raise Warning('Config file %s is world-readable/writable' % cfgfile)
+
 config = configparser.ConfigParser()
 with open(cfgfile, 'r') as fp:
     config.read_file(itertools.chain(['[DEFAULT]'], fp), source=cfgfile)

@@ -1,7 +1,6 @@
 [Unit]
 Description=AudoDeploy from Gitea: Sync-daemon component
-After=network.service
-Require=network.service
+After=network.target
 
 [Service]
 User=root

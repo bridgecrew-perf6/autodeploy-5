@@ -4,7 +4,7 @@
 # but this has a standalone server.
 
 from autodeploy.util import run_serverclass_thread
-from autodeploy.webhook import check_webhook_output
+from autodeploy.webhook import process_webhook_output
 from autodeploy.message import Message, send_message
 
 
@@ -44,9 +44,10 @@ class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
             log.exception('Unexpected error processing request')
             self.answer(500, 'Error processing request', str(e) + '\n')
 
-    def process_data(self, json, signature):
+    def process_data(self, data, signature):
 
-        if not check_webhook_output(json, signature):
+        json = process_webhook_output(data, signature)
+        if not json:
             self.answer(403, 'Invalid signature or repo')
             return
         response, ok = send_message(Message.from_json(json).as_bytes())

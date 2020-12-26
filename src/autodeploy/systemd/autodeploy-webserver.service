@@ -1,7 +1,8 @@
 [Unit]
 Description=AudoDeploy from Gitea: Standalone web-server component
-After=network.service
-Require=network.service
+After=network.target
+Requires=network-online.target
+Wants=autodeployd.service
 
 [Service]
 User=autodeploywebd
