@@ -5,10 +5,10 @@ Requires=network-online.target
 Wants=autodeployd.service
 
 [Service]
-User=autodeploywebd
-Group=autodeploywebd
+User=adwebd
+Group=adwebd
 WorkingDirectory=/
-ExecStart=/usr/bin/autodeploy-webd -p 5000
+ExecStart=/usr/bin/autodeploy-webd -p 6942
 Restart=always
 RestartSec=5
 

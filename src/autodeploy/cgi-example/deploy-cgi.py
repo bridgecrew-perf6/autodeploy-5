@@ -32,7 +32,7 @@ def recieve_and_submit(data: bytes, sig: str):
 
 if __name__ == '__main__':
     try:
-        out, ok = recieve_and_submit(sys.stdin.read(), get_signature())
+        out, ok = recieve_and_submit(sys.stdin.buffer.read(), get_signature())
     except Exception as e:
         err_exit('CGI Exception occured: %s\n%s' %
                  (str(e), '\n'.join(traceback.format_tb(e.__traceback__))), 501)

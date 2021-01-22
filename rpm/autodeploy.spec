@@ -98,5 +98,8 @@ chgrp adwebd /etc/autodeploy.cfg
 
 
 %changelog
+* Fri Jan 21 2021 William Strecker-Kellogg <willsk@bnl.gov>
+- Bump version, fixups for RPM pre/post scripts primarily
+
 * Wed Dec 23 2020 William Strecker-Kellogg <willsk@bnl.gov>
 - Initial specfile

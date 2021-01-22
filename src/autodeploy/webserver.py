@@ -64,7 +64,7 @@ class WebhookRecvServer(HTTPServer):
 
 
 def daemon_main():
-    port = 5000
+    port = 5000     # For testing
     if '-p' in sys.argv:
         port = int(sys.argv[sys.argv.index('-p') + 1])
     run_serverclass_thread(WebhookRecvServer(port))
