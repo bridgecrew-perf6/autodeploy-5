@@ -1,6 +1,6 @@
 %define pkgname autodeploy
 %define version 1.0
-%define release 1
+%define release 2
 
 Name: python3-%{pkgname}
 Summary: An agent to listen for repo webhooks and securely deploy them
