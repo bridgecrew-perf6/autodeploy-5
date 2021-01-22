@@ -33,13 +33,13 @@ acts on the local filesystem by checking out the changes from the pushed webhook
 into a cloned repo.
 
 
-%package webserver
+%package webd
 Summary: Standalone webserver component recieving git-push webhook from Gitea
 Requires: python3 >= 3.5
 Requires: python3-%{pkgname}
 Requires: autodeploy == %{version}
 
-%description webserver
+%description webd
 A standalone webserver that that listens for Gitea webhook POST events as an
 alternative to the CGI script in the example directory of the autodeploy package
 
@@ -64,7 +64,7 @@ mv %{buildroot}%{python3_sitelib}/%{pkgname}/conf.sample \
     %{buildroot}%{_sysconfdir}/autodeploy.cfg
 
 
-%pre webserver
+%pre webd
 getent group adwebd >/dev/null || groupadd -r adwebd
 getent passwd adwebd >/dev/null || \
 useradd -r -g adwebd -d /run/autodeploy -s /sbin/nologin \
@@ -76,12 +76,12 @@ systemctl daemon-reload
 key=$(tr -cd '0-9a-zA-Z' < /dev/urandom  | head -c 20)
 sed -i "s/^daemonkey.*=.*/daemonkey = ${key}/" /etc/autodeploy.cfg
 
-%post webserver
+%post webd
 systemctl daemon-reload
 chgrp adwebd /etc/autodeploy.cfg
 
-%preun webserver
-%systemd_preun autodeploy-webserver.service
+%preun webd
+%systemd_preun autodeploy-webd.service
 
 %files
 %doc README.md
@@ -92,8 +92,8 @@ chgrp adwebd /etc/autodeploy.cfg
 %attr(0640, root, -)%config(noreplace) %{_sysconfdir}/autodeploy.cfg
 
 
-%files webserver
-%{_unitdir}/autodeploy-webserver.service
+%files webd
+%{_unitdir}/autodeploy-webd.service
 %{_bindir}/%{pkgname}-webd
 
 
