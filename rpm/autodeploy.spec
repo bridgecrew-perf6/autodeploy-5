@@ -1,5 +1,5 @@
 %define pkgname autodeploy
-%define version 0.5.0
+%define version 1.0
 %define release 1
 
 Name: python3-%{pkgname}
@@ -65,17 +65,20 @@ mv %{buildroot}%{python3_sitelib}/%{pkgname}/conf.sample \
 
 
 %pre webserver
-getent group autodeploywebd >/dev/null || groupadd -r autodeploywebd
-getent passwd autodeploywebd >/dev/null || \
-useradd -r -g autodeploywebd -d /run/autodeploy -s /sbin/nologin \
-  -c "Runs Git-autodeploy standalone webserver" autodeploywebd
+getent group adwebd >/dev/null || groupadd -r adwebd
+getent passwd adwebd >/dev/null || \
+useradd -r -g adwebd -d /run/autodeploy -s /sbin/nologin \
+  -c "Runs Git-autodeploy standalone webserver" adwebd
 exit 0
 
 %post
 systemctl daemon-reload
+key=$(tr -cd '0-9a-zA-Z' < /dev/random  | head -c 20)
+sed -i "s/^daemonkey.*=.*/daemonkey = ${key}/" /etc/autodeploy.cfg
 
 %post webserver
 systemctl daemon-reload
+chgrp adwebd /etc/autodeploy.cfg
 
 %preun webserver
 %systemd_preun autodeploy-webserver.service
@@ -86,7 +89,7 @@ systemctl daemon-reload
 %{python3_sitelib}/%{pkgname}-*.egg-info/
 %{python3_sitelib}/%{pkgname}/
 %{_unitdir}/autodeployd.service
-%config(noreplace) %{_sysconfdir}/autodeploy.cfg
+%attr(0640, root, -)%config(noreplace) %{_sysconfdir}/autodeploy.cfg
 
 
 %files webserver
