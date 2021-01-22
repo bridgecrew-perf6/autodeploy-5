@@ -73,7 +73,7 @@ exit 0
 
 %post
 systemctl daemon-reload
-key=$(tr -cd '0-9a-zA-Z' < /dev/random  | head -c 20)
+key=$(tr -cd '0-9a-zA-Z' < /dev/urandom  | head -c 20)
 sed -i "s/^daemonkey.*=.*/daemonkey = ${key}/" /etc/autodeploy.cfg
 
 %post webserver
