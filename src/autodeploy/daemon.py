@@ -76,7 +76,7 @@ class SyncRequestHandler(BaseRequestHandler):
         try:
             if sec.getboolean('bare'):
                 log.info("Bare repo fetch...")
-                update_repo(sec['local'], sec['url'], True)
+                update_repo(sec['local'], sec['url'], True, sec.get('owner'))
             else:
                 diff = make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
             log.info("GitRepo at %s synced %s --> %s by %s <%s>",
@@ -92,10 +92,10 @@ class SyncRequestHandler(BaseRequestHandler):
         return reply.encode('utf8') + postscript
 
 
-def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> str:
+def make_repo_state(path: str, url: str, oldhash: str, newhash: str, user: Optional[str]) -> str:
     """ Make sure git repo from @url is in state @newhash in folder @path """
 
-    git = update_repo(path, url, False)
+    git = update_repo(path, url, False, user)
     current_hash = git.rev_parse('HEAD')
     if oldhash != current_hash:
         log.warning("Repo in unexpected state (%s) != upstream (%s)",
@@ -105,10 +105,10 @@ def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> str:
     return git.diff(oldhash, newhash, stat=True)
 
 
-def update_repo(path: str, url: str, bare: bool) -> GitRepo:
+def update_repo(path: str, url: str, bare: bool, owner: Optional[str]) -> GitRepo:
     """ Run a fetch in the repo given """
 
-    git = GitRepo(path, url, bare)
+    git = GitRepo(path, url, bare, runas=owner)
     git.fetch()
     return git
 

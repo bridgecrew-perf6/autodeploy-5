@@ -38,5 +38,9 @@ bare = false
 # given the local path as an argument
 postscript = /usr/libexec/postsync.sh
 
+# Optional User who should locally own the files in the checked-out git repo
+# defaults to 'root' or whoever the daemon runs as...
+owner = appuser
+
 
 # [other-repo] etc...

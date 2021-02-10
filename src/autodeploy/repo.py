@@ -20,16 +20,18 @@ class GitRepo(object):
         upstream url and possible bare
     """
 
-    def __init__(self, dir: str, remote: Optional[str] = None, bare: bool = False):
+    def __init__(self, dir: str, remote: Optional[str] = None, bare: bool = False,
+                       runas: Optional[str] = None):
         """ Clone the repo in constructor if not exists and @remote is given """
 
         self.dir = dir
+        self.runas = runas
         if remote and not self.exists():
             log.info("Cloning %s into %s", remote, dir)
             parent = os.path.abspath(os.path.join(self.dir, os.pardir))
             ifbare = '--bare ' if bare else ''
-            output, rc = get_output('git clone {2}{0} {1}'.format(remote, dir, ifbare),
-                                    cwd=parent)
+            output, rc = self._runcmd('git clone {2}{0} {1}'.format(remote, dir, ifbare),
+                                      cwd=parent)
             if rc != 0:
                 log.error("Error cloning %s into %s\n%s", remote, parent, output)
                 raise GitExcept("Clone error")
@@ -37,12 +39,18 @@ class GitRepo(object):
             if self.rev_parse('--is-bare-repository') != 'true':
                 raise GitExcept('Bare repo at {0} is not actually bare')
 
+    def _runcmd(self, cmd: str, cwd = None):
+        if self.runas:
+            cmd = f'sudo -u {self.runas} {cmd}'
+        wd = cwd if cwd else self.dir
+        return get_output(cmd, cwd=wd)
+
     def rev_parse(self, ref: str) -> Optional[str]:
-        hash, rc = get_output('git rev-parse {0}'.format(ref), cwd=self.dir)
+        hash, rc = self._runcmd('git rev-parse {0}'.format(ref))
         return hash.decode('ascii').strip('\n') if rc == 0 else None
 
     def fetch(self) -> None:
-        out, rc = get_output('git fetch', cwd=self.dir)
+        out, rc = self._runcmd('git fetch')
         log.debug("git fetching in %s", self.dir)
         if rc != 0:
             log.error("Error running git-fetch: %s", out)
@@ -51,13 +59,12 @@ class GitRepo(object):
     def exists(self) -> bool:
         return os.path.exists(self.dir)
 
-    def current_ref(self, ref: str ='HEAD') -> Optional[str]:
-        out, r = get_output('git symbolic-ref --short -q {0}'.format(ref),
-                            cwd=self.dir)
+    def current_ref(self, ref: str = 'HEAD') -> Optional[str]:
+        out, r = self._runcmd('git symbolic-ref --short -q {0}'.format(ref))
         return out.decode('ascii').strip('\n') if r == 0 else None
 
     def reset(self, hash: str) -> None:
-        out, r = get_output(f'git reset --hard {hash}', cwd=self.dir)
+        out, r = self._runcmd(f'git reset --hard {hash}')
         log.debug("git resetting to %s", hash)
         if r != 0:
             log.error("Error resetting to %s:\n%s", hash, out)
@@ -65,7 +72,7 @@ class GitRepo(object):
 
     def diff(self, first: str, second: str, stat: bool = True) -> str:
         cmd = 'git diff' + ' --stat ' if stat else ' '
-        out, r = get_output(f'{cmd} {first} {second}')
+        out, r = self._runcmd(f'{cmd} {first} {second}')
         log.debug('%s %s %s', cmd, first, second)
         if r != 0:
             log.error("Error running git diff %s %s!", first, second)
