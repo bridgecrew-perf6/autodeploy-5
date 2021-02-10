@@ -78,7 +78,7 @@ class SyncRequestHandler(BaseRequestHandler):
                 log.info("Bare repo fetch...")
                 update_repo(sec['local'], sec['url'], True, sec.get('owner'))
             else:
-                diff = make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
+                diff = make_repo_state(sec['local'], sec['url'], msg.before, msg.state, sec.get('owner'))
             log.info("GitRepo at %s synced %s --> %s by %s <%s>",
                      sec['local'], msg.before, msg.state, msg.fullname, msg.email)
         except GitExcept as e:
