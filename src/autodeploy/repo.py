@@ -63,12 +63,11 @@ class GitRepo(object):
             log.error("Error resetting to %s:\n%s", hash, out)
             raise GitExcept("Error git hard-reset")
 
-    def diff(self, a: str, b: str, stat: bool = True):
+    def diff(self, first: str, second: str, stat: bool = True) -> str:
         cmd = 'git diff' + ' --stat ' if stat else ' '
-        out, r = get_output(f'{cmd} {a} {b}')
-        log.debug(f'{cmd} {a} {b}')
+        out, r = get_output(f'{cmd} {first} {second}')
+        log.debug('%s %s %s', cmd, first, second)
         if r != 0:
-            log.error(f"Error running git diff {a} {b}!")
+            log.error("Error running git diff %s %s!", first, second)
             raise GitExcept('Error git-diff!')
         return out.decode('ascii').strip('\n')
-

@@ -9,11 +9,11 @@
 
 from typing import Tuple
 
-from autodeploy import daemon_key, socket_path
-from autodeploy.util import check_hmac
-
 import socket
 import hmac
+
+from autodeploy import daemon_key, socket_path
+from autodeploy.util import check_hmac
 
 __all__ = ['Message', 'send_message']
 

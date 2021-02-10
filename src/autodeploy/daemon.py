@@ -72,26 +72,27 @@ class SyncRequestHandler(BaseRequestHandler):
         if not msg.verify():
             raise ValueError(f'Invalid signature on {msg.repo}')
 
+        diff = None
         try:
             if sec.getboolean('bare'):
                 log.info("Bare repo fetch...")
                 update_repo(sec['local'], sec['url'], True)
             else:
-                make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
+                diff = make_repo_state(sec['local'], sec['url'], msg.before, msg.state)
             log.info("GitRepo at %s synced %s --> %s by %s <%s>",
                      sec['local'], msg.before, msg.state, msg.fullname, msg.email)
         except GitExcept as e:
             log.exception("Exception with git: %s", e)
             raise
 
-        postscript = run_postscript_and_notify(msg, sec['local'], sec.get('postscript'))
+        postscript = run_postscript_and_notify(msg, sec['local'], sec.get('postscript'), diff)
         reply = f"Repo in {sec['local']} updated to state {msg.state}\n"
         if postscript:
             reply += f"\nPost script {sec.get('postscript')} returns:\n"
         return reply.encode('utf8') + postscript
 
 
-def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> None:
+def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> str:
     """ Make sure git repo from @url is in state @newhash in folder @path """
 
     git = update_repo(path, url, False)
@@ -100,6 +101,8 @@ def make_repo_state(path: str, url: str, oldhash: str, newhash: str) -> None:
         log.warning("Repo in unexpected state (%s) != upstream (%s)",
                     current_hash, oldhash)
     git.reset(newhash)
+
+    return git.diff(oldhash, newhash, stat=True)
 
 
 def update_repo(path: str, url: str, bare: bool) -> GitRepo:
@@ -110,7 +113,7 @@ def update_repo(path: str, url: str, bare: bool) -> GitRepo:
     return git
 
 
-def run_postscript_and_notify(m: Message, path: str, script: Optional[str]) -> bytes:
+def run_postscript_and_notify(m: Message, path: str, script: Optional[str], diff: Optional[str]) -> bytes:
 
     msg = f"""\
 Hello,
@@ -118,6 +121,8 @@ Hello,
 Git Deploy was done for {m.repo} on {socket.getfqdn()} in {path}
 setting state {m.state} for branch {m.branch}.
 """
+    if diff:
+        msg += '\nChanges:\n\n' + diff + '\n'
     out = b''
     if script:
         out, rc = get_output(f'{script} "{path}"')
