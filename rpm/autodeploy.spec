@@ -1,5 +1,5 @@
 %define pkgname autodeploy
-%define version 1.0
+%define version 1.1
 %define release 2
 
 Name: python3-%{pkgname}
@@ -98,6 +98,9 @@ chgrp adwebd /etc/autodeploy.cfg
 
 
 %changelog
+* Wed Feb 10 2021 William Strecker-Kellogg <willsk@bnl.gov>
+- New version, diff in email and owner option for local repo
+
 * Fri Jan 21 2021 William Strecker-Kellogg <willsk@bnl.gov>
 - Bump version, fixups for RPM pre/post scripts primarily
 
