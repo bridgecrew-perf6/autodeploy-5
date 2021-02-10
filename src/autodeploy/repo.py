@@ -37,7 +37,7 @@ class GitRepo(object):
             if self.rev_parse('--is-bare-repository') != 'true':
                 raise GitExcept('Bare repo at {0} is not actually bare')
 
-    def rev_parse(self, ref) -> Optional[str]:
+    def rev_parse(self, ref: str) -> Optional[str]:
         hash, rc = get_output('git rev-parse {0}'.format(ref), cwd=self.dir)
         return hash.decode('ascii').strip('\n') if rc == 0 else None
 
@@ -51,14 +51,24 @@ class GitRepo(object):
     def exists(self) -> bool:
         return os.path.exists(self.dir)
 
-    def current_ref(self, ref='HEAD') -> Optional[str]:
+    def current_ref(self, ref: str ='HEAD') -> Optional[str]:
         out, r = get_output('git symbolic-ref --short -q {0}'.format(ref),
                             cwd=self.dir)
         return out.decode('ascii').strip('\n') if r == 0 else None
 
-    def reset(self, hash) -> None:
+    def reset(self, hash: str) -> None:
         out, r = get_output(f'git reset --hard {hash}', cwd=self.dir)
         log.debug("git resetting to %s", hash)
         if r != 0:
             log.error("Error resetting to %s:\n%s", hash, out)
             raise GitExcept("Error git hard-reset")
+
+    def diff(self, a: str, b: str, stat: bool = True):
+        cmd = 'git diff' + ' --stat ' if stat else ' '
+        out, r = get_output(f'{cmd} {a} {b}')
+        log.debug(f'{cmd} {a} {b}')
+        if r != 0:
+            log.error(f"Error running git diff {a} {b}!")
+            raise GitExcept('Error git-diff!')
+        return out.decode('ascii').strip('\n')
+
