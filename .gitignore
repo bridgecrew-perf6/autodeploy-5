@@ -4,3 +4,4 @@ build/
 .mypy_cache
 *.code-workspace
 *.egg-info/
+poetry.lock
