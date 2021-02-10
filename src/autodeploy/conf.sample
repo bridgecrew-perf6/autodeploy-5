@@ -14,7 +14,7 @@ loglocation = stderr
 smtphost = localhost
 
 # Web-daemon port to listen on -- defaults to 6942 if not set
-webport = 5000
+# webport = 5000
 
 daemonkey = Cccchhangemoi!
 
@@ -35,15 +35,15 @@ branch = master
 
 # Make the local path a bare repo not a checked out one
 # defaults to false, conflicts with branch setting
-bare = false
+# bare = false
 
 # Optional script to run after a fetch and update of local repo, this gets
 # given the local path as an argument
-postscript = /usr/libexec/postsync.sh
+# postscript = /usr/libexec/postsync.sh
 
 # Optional User who should locally own the files in the checked-out git repo
 # defaults to 'root' or whoever the daemon runs as...
-owner = appuser
+# owner = appuser
 
 
 # [other-repo] etc...

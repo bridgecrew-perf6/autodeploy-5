@@ -100,9 +100,9 @@ def make_repo_state(path: str, url: str, oldhash: str, newhash: str, user: Optio
     if oldhash != current_hash:
         log.warning("Repo in unexpected state (%s) != upstream (%s)",
                     current_hash, oldhash)
+    diff = git.diff(oldhash, newhash, stat=True)
     git.reset(newhash)
-
-    return git.diff(oldhash, newhash, stat=True)
+    return diff
 
 
 def update_repo(path: str, url: str, bare: bool, owner: Optional[str]) -> GitRepo:
