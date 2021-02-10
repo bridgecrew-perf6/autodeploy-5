@@ -1,6 +1,6 @@
 %define pkgname autodeploy
 %define version 1.1
-%define release 2
+%define release 1
 
 Name: python3-%{pkgname}
 Summary: An agent to listen for repo webhooks and securely deploy them
@@ -38,6 +38,7 @@ Summary: Standalone webserver component recieving git-push webhook from Gitea
 Requires: python3 >= 3.5
 Requires: python3-%{pkgname}
 Requires: autodeploy == %{version}
+Obsoletes: python3-autodeploy-webserver
 
 %description webd
 A standalone webserver that that listens for Gitea webhook POST events as an

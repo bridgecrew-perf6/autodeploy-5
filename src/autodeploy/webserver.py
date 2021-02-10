@@ -3,6 +3,7 @@
 # that runs as a CGI script under an existing webserver. They do the same thing
 # but this has a standalone server.
 
+from autodeploy import webd_port
 from autodeploy.util import run_serverclass_thread
 from autodeploy.webhook import process_webhook_output
 from autodeploy.message import Message, send_message
@@ -14,6 +15,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+DEFAULT_PORT = 6942
 
 class WebhookHTTPRequestHandler(BaseHTTPRequestHandler):
 
@@ -64,7 +66,11 @@ class WebhookRecvServer(HTTPServer):
 
 
 def daemon_main():
-    port = 5000     # For testing
     if '-p' in sys.argv:
         port = int(sys.argv[sys.argv.index('-p') + 1])
+    elif webd_port:
+        port = int(webd_port)
+    else:
+        port = DEFAULT_PORT
+
     run_serverclass_thread(WebhookRecvServer(port))

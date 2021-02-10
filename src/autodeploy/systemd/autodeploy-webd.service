@@ -8,7 +8,7 @@ Wants=autodeployd.service
 User=adwebd
 Group=adwebd
 WorkingDirectory=/
-ExecStart=/usr/bin/autodeploy-webd -p 6942
+ExecStart=/usr/bin/autodeploy-webd
 Restart=always
 RestartSec=5
 

@@ -13,6 +13,9 @@ loglocation = stderr
 # Address to send emails to -- if absent don't send
 smtphost = localhost
 
+# Web-daemon port to listen on -- defaults to 6942 if not set
+webport = 5000
+
 daemonkey = Cccchhangemoi!
 
 # Section name is from "full_name" of webhook output for "repository"
