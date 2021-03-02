@@ -125,7 +125,7 @@ setting state {m.state} for branch {m.branch}.
         msg += '\nChanges:\n\n' + diff + '\n'
     out = b''
     if script:
-        out, rc = get_output(f'{script} "{path}"')
+        out, rc = get_output(script)
         msg += f'\nPost-script {script} returned {rc}:\n{out.decode("utf8")}'
     msg += '\nGitDeploy Daemon'
 

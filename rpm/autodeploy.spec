@@ -1,6 +1,6 @@
 %define pkgname autodeploy
 %define version 1.1
-%define release 1
+%define release 3
 
 Name: python3-%{pkgname}
 Summary: An agent to listen for repo webhooks and securely deploy them
@@ -99,6 +99,9 @@ chgrp adwebd /etc/autodeploy.cfg
 
 
 %changelog
+* Tue Mar 02 2021 William Strecker-Kellogg <willsk@bnl.gov>
+- Postscript is pure, no longer gets argument
+
 * Wed Feb 10 2021 William Strecker-Kellogg <willsk@bnl.gov>
 - New version, diff in email and owner option for local repo
 

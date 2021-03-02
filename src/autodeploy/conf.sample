@@ -37,9 +37,8 @@ branch = master
 # defaults to false, conflicts with branch setting
 # bare = false
 
-# Optional script to run after a fetch and update of local repo, this gets
-# given the local path as an argument
-# postscript = /usr/libexec/postsync.sh
+# Optional script to run after a fetch and update of local repo
+# postscript = /usr/libexec/postsync.sh /usr/src/repo
 
 # Optional User who should locally own the files in the checked-out git repo
 # defaults to 'root' or whoever the daemon runs as...
